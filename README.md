@@ -19,12 +19,21 @@ Pipelines can empower you to do more.
 
 ## Getting Started
 
+
+### Windows
+```
+python -m venv .env
+.env\Scripts\activate
+
+pip install -r requirements.txt
+bokeh serve iris
 ```
 
+### Mac/Linux
+```
 python -m venv .env
-.env/Scripts/activate
+source .env/bin/activate
 
-pip install -r requirements
+pip install -r requirements.txt
 bokeh serve iris
-
 ```
