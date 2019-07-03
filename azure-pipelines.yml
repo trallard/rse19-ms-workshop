@@ -6,7 +6,7 @@ pr: none
 
 stages:
 - stage: Testing my awesome Python app
-  displayName: '🐍 testing'
+  displayName: 'Python matrix testing'
   jobs:
     - job: Unittesting
       pool:
@@ -24,7 +24,7 @@ stages:
           inputs:
             versionSpec: '$(python.version)'
             architecture: 'x64'
-             
+
         - script: |
             python -m pip install --upgrade pip
             pip install -r requirements.txt
