@@ -18,8 +18,7 @@ class Plot:
     def __init__(self, dataset):
         self._dataset = dataset
 
-        self._fig = figure(plot_height=800, plot_width=800,
-                           title=dataset.title,
+        self._fig = figure(title=dataset.title,
                            tools="crosshair,pan,reset,save,wheel_zoom",
                            name="plot")
 
