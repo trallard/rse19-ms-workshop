@@ -19,12 +19,37 @@ Then click on **Create**
 
 ## Understanding the Azure Pipeline Build
 
-A build can have multiple stages. Each stage represent a specific set of tasks within the main pipeline. For example you might have the following jobs:
+A build can have multiple stages. Each stage can contain one or more jobs. For example you might have the following stages:
 - Test (my code using unittest)
 - Build (my awesome app)
 - Deploy (to pre-production)
 
+You can imagine a pipeline as a dependency graph:
+![](assets/pipeline_hierarchy.png)
+
 
 You can find a list of all the available tasks in the [Pipelines documentation](https://docs.microsoft.com/azure/devops/pipelines/tasks/?view=azure-devops&viewFallbackFrom=vsts&WT.mc_id=rse19-github-taallard). Plus you can define your own tasks using bash or PowerShell.
 
-Let's start by creating our `azure-pipelines.yml` 
+Let's start by creating our `azure-pipelines.yml`. Make sure to place it on the root of your project directory.
+
+```
+# Python example Azure Pipeline
+
+trigger:
+- master
+
+# specific branch build
+pr:
+  branches:
+    include:
+    - master
+    exclude:
+    - feature/*  # regex wildcard (or any other regex)
+
+```
+
+First we specify what triggers the pipeline, in this case pushing to the master branch. Equally, the `pr` entry determines which cases of Pull Requests will trigger the pipeline as well.
+
+For example, you might not want any pr to build so you can set this to `pr:none`
+
+👉🏼 Read more about [triggers](https://docs.microsoft.com/azure/devops/pipelines/yaml-schema?view=azure-devops&tabs=schema&WT.mc_id=rse19-github-taallard#triggers)
