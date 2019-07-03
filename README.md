@@ -13,3 +13,15 @@ work. We will also walk through how to use Azure Pipelines to provide
 simple yet powerful Continuous Integration and Deployment functionality
 for your projects. Come along and learn how VS Code and Azure Pipelines
 can empower you to do more.
+
+## Getting Started
+
+```
+
+python -m venv .env
+.env/Scripts/activate
+
+pip install -r requirements
+bokeh serve iris
+
+```
