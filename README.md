@@ -13,4 +13,27 @@ with Azure) and Remote Development (which lets you work locally
 but run code remotely) can give you RSE superpowers in your day-to-day
 work. We will also walk you through how to use Azure Pipelines to provide
 simple yet powerful Continuous Integration and Deployment functionality
-for your projects, from  multi environment testing to automated building and deployment of your solutions. Come along and learn how VS Code and Azure Pipelines can empower you to do more.
+for your projects, from  multi environment testing to automated building and
+deployment of your solutions. Come along and learn how VS Code and Azure
+Pipelines can empower you to do more.
+
+## Getting Started
+
+
+### Windows
+```
+python -m venv .env
+.env\Scripts\activate
+
+pip install -r requirements.txt
+bokeh serve iris
+```
+
+### Mac/Linux
+```
+python -m venv .env
+source .env/bin/activate
+
+pip install -r requirements.txt
+bokeh serve iris
+```
