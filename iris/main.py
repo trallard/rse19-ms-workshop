@@ -1,25 +1,7 @@
-''' Present an interactive function explorer with slider widgets.
-
-Scrub the sliders to change the properties of the ``sin`` curve, or
-type into the title text box to update the title of the plot.
-
-Use the ``bokeh serve`` command to run the example by executing:
-
-    bokeh serve sliders.py
-
-at your command prompt. Then navigate to the URL
-
-    http://localhost:5006/sliders
-
-in your browser.
-
-'''
-import numpy as np
+""" The main script for the Bokeh application """
 
 from bokeh.io import curdoc
-from bokeh.layouts import row, column
-from bokeh.transform import linear_cmap
-from bokeh.models import ColumnDataSource
+from bokeh.layouts import column
 from bokeh.models.widgets import Select
 from bokeh.plotting import figure
 
@@ -27,6 +9,12 @@ from dataset import IrisDataset
 
 
 class Plot:
+    """ Encapsulates the interactive plot elements of the application.
+
+    Args:
+        dataset -- a dataset class
+    """
+
     def __init__(self, dataset):
         self._dataset = dataset
 
@@ -52,13 +40,15 @@ class Plot:
         self._y_select.on_change("value", self.update_data)
         self._inputs = column(self._x_select, self._y_select, name="inputs")
 
-    def update_data(self, attrname, old, new):
+    def update_data(self, attrname, old, new): #pylint: disable=unused-argument
+        """ Callback when a selector is updated """
         self._dataset.x_feature = self._x_select.value
         self._dataset.y_feature = self._y_select.value
         self._fig.title.text = self._dataset.title
 
     @property
     def roots(self):
+        """ The Bokeh roots exposed by this plot """
         yield self._fig
         yield self._inputs
 
