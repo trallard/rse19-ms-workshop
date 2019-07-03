@@ -37,7 +37,8 @@ class Plot:
 
         self._x_select.on_change("value", self.update_data)
         self._y_select.on_change("value", self.update_data)
-        self._inputs = column(self._x_select, self._y_select, name="inputs")
+        self._inputs = column(self._x_select, self._y_select,
+                              sizing_mode="stretch_width", name="inputs")
 
     def update_data(self, attrname, old, new): #pylint: disable=unused-argument
         """ Callback when a selector is updated """
