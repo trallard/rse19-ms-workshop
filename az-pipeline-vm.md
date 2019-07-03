@@ -53,3 +53,10 @@ First we specify what triggers the pipeline, in this case pushing to the master 
 For example, you might not want any pr to build so you can set this to `pr:none`
 
 👉🏼 Read more about [triggers](https://docs.microsoft.com/azure/devops/pipelines/yaml-schema?view=azure-devops&tabs=schema&WT.mc_id=rse19-github-taallard#triggers)
+
+
+## Setting your pipeline
+
+Back in Azure Devops click on **Pipelines > New pipelines** and then select GitHub from the options presented:
+
+![](https://ml-devops-tutorial.readthedocs.io/en/latest/_images/pipeline1.png)
