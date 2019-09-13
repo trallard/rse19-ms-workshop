@@ -1,11 +1,11 @@
-""" Tests for the Iris Bokeh app """
+""" Tests for the Iris dataset """
 
 #pylint: disable=redefined-outer-name
 
 import pytest
 import numpy as np
 
-from dataset import IrisDataset
+from iris import IrisDataset
 
 @pytest.fixture(scope="module")
 def iris():
