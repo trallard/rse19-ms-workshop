@@ -27,6 +27,7 @@ class BostonDataset:
         batch = load_boston()
         self._feature_names = batch.feature_names.tolist()
         self._features = batch.data
+        self._prices = batch.target
         self._x_feature = self._feature_names[0]
         self._y_feature = self._feature_names[1]
         self._source = ColumnDataSource()
@@ -37,12 +38,17 @@ class BostonDataset:
         y_index = self._feature_names.index(self._y_feature)
         x = self._features[:, x_index]
         y = self._features[:, y_index]
-        self._source.data = dict(x=x, y=y)
+        self._source.data = dict(x=x, y=y, price=self._prices)
 
     @property
     def source(self):
         """ The data sources for the different targets in the Boston dataset """
         return self._source
+
+    @property
+    def prices(self):
+        """ The target house prices """
+        return self._prices
 
     @property
     def title(self):
@@ -64,6 +70,11 @@ class BostonDataset:
         """ The current x-axis feature """
         return self._x_feature
 
+    @property
+    def x_title(self):
+        """ The readable title for the x-axis """
+        return FEATURE_INFO[self._x_feature]
+
     @x_feature.setter
     def x_feature(self, feature):
         """ Used to set the current x-axis feature.
@@ -82,6 +93,11 @@ class BostonDataset:
     def y_feature(self):
         """ The current y-axis feature """
         return self._y_feature
+
+    @property
+    def y_title(self):
+        """ The readable title for the y-axis """
+        return FEATURE_INFO[self._y_feature]
 
     @y_feature.setter
     def y_feature(self, feature):

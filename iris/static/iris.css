@@ -2,8 +2,8 @@
     width: 800px;
 }
 
-.bostonbg {
-    background-image: url(boston.jpg);
+.irisbg {
+    background-image: url(iris.jpg);
     background-position: right;
     background-repeat: no-repeat;
 }

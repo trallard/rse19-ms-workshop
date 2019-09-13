@@ -2,6 +2,8 @@
 
 from bokeh.io import curdoc
 from bokeh.layouts import column
+from bokeh.models import LinearColorMapper, HoverTool
+from bokeh.palettes import Viridis6 as palette
 from bokeh.models.widgets import Select
 from bokeh.plotting import figure
 
@@ -18,11 +20,17 @@ class Plot:
     def __init__(self, dataset):
         self._dataset = dataset
 
+        hover_tool = HoverTool()
+        hover_tool.tooltips = [
+            ("price", "@price")
+        ]
         self._fig = figure(title=dataset.title,
-                           tools="crosshair,pan,reset,save,wheel_zoom",
+                           tools=[hover_tool],
                            name="plot")
 
-        self._fig.circle('x', 'y', source=dataset.source, color="blue")
+        color_mapper = LinearColorMapper(palette=palette)
+        self._fig.circle('x', 'y', source=dataset.source,
+                         fill_color={'field': 'price', 'transform': color_mapper})
 
         self._x_select = Select(title="X Axis:",
                                 value=dataset.x_feature,
@@ -40,7 +48,9 @@ class Plot:
         """ Callback when a selector is updated """
         self._dataset.x_feature = self._x_select.value
         self._dataset.y_feature = self._y_select.value
-        self._fig.title.text = self._dataset.title
+        self._fig.title.text = "Median House Prices for Boston"
+        self._fig.xaxis.axis_label = self._dataset.x_title
+        self._fig.yaxis.axis_label = self._dataset.y_title
 
     @property
     def roots(self):
