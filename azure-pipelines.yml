@@ -1,14 +1,17 @@
 # Azure pipeline for Python project
-trigger:
-- azure-pipelines
 
-pr: none
+
+# https://docs.microsoft.com/en-us/azure/devops/pipelines/yaml-schema?view=azure-devops&tabs=schema#triggers
+trigger:
+  - azure-pipelines
+  - master 
 
 stages:
-- stage: PythonTesting
+- stage: simple_python_testing
   displayName: 'Python matrix testing'
   jobs:
     - job: Unittesting
+      # https://docs.microsoft.com/en-us/azure/devops/pipelines/yaml-schema?view=azure-devops&tabs=schema#pool
       pool:
         vmImage: 'Ubuntu-16.04'
       strategy:
@@ -17,15 +20,20 @@ stages:
             python.version: '3.6'
           Python37:
             python.version: '3.7'
-        maxParallel: 2 
 
       steps:
         - task: UsePythonVersion@0
+          displayName: Get Python version
           inputs:
             versionSpec: '$(python.version)'
             architecture: 'x64'
 
         - script: |
+            # commands run within the task
             python -m pip install --upgrade pip
             pip install -r requirements.txt
+            pip install pytest
           displayName: 'Install dependencies'
+        
+        - script: python -m pytest tests/
+          displayName: 'Run tests'

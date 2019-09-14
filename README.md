@@ -1,7 +1,6 @@
 # Be an RSE Superhero with VS Code and Azure Pipelines
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-
+[![License: MIT](https://img.shields.io/badge/License-MIT-purple.svg)](https://opensource.org/licenses/MIT)
 [![Build Status](https://dev.azure.com/trallard/rse19-demo/_apis/build/status/trallard.rse19-demo?branchName=azure-pipelines)](https://dev.azure.com/trallard/rse19-demo/_build/latest?definitionId=7&branchName=azure-pipelines)
 
 In this workshop, we will show you how you can incorporate VS Code and Azure
