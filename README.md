@@ -2,6 +2,8 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
+[![Build Status](https://dev.azure.com/trallard/rse19-demo/_apis/build/status/trallard.rse19-demo?branchName=azure-pipelines)](https://dev.azure.com/trallard/rse19-demo/_build/latest?definitionId=7&branchName=azure-pipelines)
+
 In this workshop, we will show you how you can incorporate VS Code and Azure
 Pipelines into your day-to-day workflow as an RSE, helping you to be more
 productive and accomplish common tasks with greater ease. 
