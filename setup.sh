@@ -11,8 +11,7 @@ rm /tmp/Anaconda3-${CONDA_VERSION}-Linux-x86_64.sh
 
 # installing requirements from this repo
 # note that this needs the full path to conda
-sudo /opt/conda/bin/conda install -y --file requirement
-s.txt 
+sudo /opt/conda/bin/conda install -y --file requirements.txt 
 
 # installing node and typescript
 
