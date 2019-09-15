@@ -15,7 +15,7 @@ jobs:
 
   # using template
   steps:
-    - template: ./-anaconda.yml
+    - template: ./anaconda.yml
 
 
 - job:
