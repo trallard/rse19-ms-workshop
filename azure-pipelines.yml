@@ -44,7 +44,7 @@ stages:
 
         - script: |
             pip install pytest pytest-azurepipelines
-            pytest tests 
+            python -m pytest tests/
           displayName: 'Test with pytest'
                 
     
@@ -83,5 +83,5 @@ stages:
 
         - script: |
             pip install pytest pytest-azurepipelines
-            pytest tests 
+            python -m pytest tests/ 
           displayName: 'Test with pytest'
