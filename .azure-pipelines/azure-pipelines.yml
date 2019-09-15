@@ -15,6 +15,19 @@ jobs:
 
   # using template
   steps:
-    - template: ./ubuntu-anaconda.yml
-    
+    - template: ./-anaconda.yml
 
+
+- job:
+  displayName: MacOS_test
+  pool:
+    vmImage: 'macOS-10.13'
+  strategy:
+    matrix:
+      Python36:
+        python.version: '3.6'
+      Python37:
+        python.version: '3.7'
+  
+  steps:
+    - template: ./anaconda.yml

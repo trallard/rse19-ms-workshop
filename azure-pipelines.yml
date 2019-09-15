@@ -38,8 +38,8 @@ stages:
 
         - script: |
             python -m pip install pylint --quiet
-            pylint ./boston/*.py
-            pylint ./iris/*.py
+            pylint boston/*.py
+            pylint iris/*.py
           displayName: 'Run lint tests'
 
         - script: |
@@ -78,8 +78,8 @@ stages:
 
         - script: |
             python -m pip install pylint --quiet
-            pylint ./boston/*.py
-            pylint ./iris/*.py
+            pylint boston/*.py
+            pylint iris/*.py
           displayName: 'Run lint tests'
 
         - script: |
