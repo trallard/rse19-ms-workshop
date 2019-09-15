@@ -37,8 +37,8 @@ stages:
           displayName: 'Install dependencies'
 
         - script: |
-            python -m pip install flake8
-            flake8 . 
+            python -m pip install pylint --quiet
+            pylint . 
           displayName: 'Run lint tests'
 
         - script: |
@@ -76,8 +76,8 @@ stages:
           displayName: 'Install dependencies'
 
         - script: |
-            python -m pip install flake8
-            flake8 . 
+            python -m pip install pylint --quiet
+            pylint . 
           displayName: 'Run lint tests'
 
         - script: |

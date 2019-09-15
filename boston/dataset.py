@@ -16,14 +16,15 @@ FEATURE_INFO = {
     "TAX": "full-value property-tax rate per $10,000",
     "PTRATIO": "pupil-teacher ratio by town",
     "B": "1000(Bk - 0.63)^2 where Bk is the proportion of blacks by town",
-    "LSTAT": "%% lower status of the population"
+    "LSTAT": "%% lower status of the population",
 }
+
 
 class BostonDataset:
     """ Encapsulates interactive Bokeh datasources for the Boston dataset """
 
     def __init__(self):
-        #pylint: disable=no-member
+        # pylint: disable=no-member
         batch = load_boston()
         self._feature_names = batch.feature_names.tolist()
         self._features = batch.data
