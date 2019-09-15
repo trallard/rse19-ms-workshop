@@ -44,8 +44,7 @@ stages:
 
         - script: |
             pip install pytest pytest-azurepipelines
-            pip install pytest-cov
-            pytest tests --doctest-modules --junitxml=junit/test-results.xml --cov=com --cov-report=xml --cov-report=html
+            pytest tests 
           displayName: 'Test with pytest'
                 
     
@@ -84,6 +83,5 @@ stages:
 
         - script: |
             pip install pytest pytest-azurepipelines
-            pip install pytest-cov
-            pytest tests --doctest-modules --junitxml=junit/test-results.xml --cov=com --cov-report=xml --cov-report=html
+            pytest tests 
           displayName: 'Test with pytest'
