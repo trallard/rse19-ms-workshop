@@ -13,5 +13,5 @@ steps:
   - bash: |
       source activate testingEnv
       pip install pytest pytest-azurepipelines
-      pytest
+      python -m pytest tests/
     displayName: pytest
