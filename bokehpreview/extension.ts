@@ -5,6 +5,7 @@ import * as fs from 'fs';
 import * as cp from 'child_process';
 
 let serverProcess: cp.ChildProcess;
+let bokehDir: string;
 
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
@@ -37,39 +38,7 @@ export function activate(context: vscode.ExtensionContext) {
 			let add_root = text.indexOf("curdoc().add_root(") >= 0;
 			let dir = doc.fileName.substring(0, start);
 			if(import_bokeh && add_root){
-				output.appendLine("Starting server...");
-				let pythonConf = vscode.workspace.getConfiguration("python");
-				if(!pythonConf){
-					output.appendLine("Python not configured");
-					return;
-				}
-
-				let command = pythonConf.get<string>("pythonPath");
-				if(!command){
-					output.appendLine("No environment found, using global python");
-					command = "python";
-				}
-
-				let args = [
-					"-m",
-					"bokeh",
-					"serve",
-					dir,
-					"--dev"
-				];
-				serverProcess = cp.spawn(command, args);
-
-				serverProcess.stdout.on('data', (data) => {
-					output.append(`${data}`);
-				});
-				
-				serverProcess.stderr.on('data', (data) => {
-					output.append(`${data}`);
-				});
-				
-				serverProcess.on('close', (code) => {
-					output.append(`child process exited with code ${code}`);
-				});
+				startServer(dir);
 			}
 		}else{
 			output.appendLine("Not a bokeh file");
@@ -79,8 +48,77 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(disposable);
 }
 
+let _bokehDir: string | undefined;
+function startServer(dir: string) {
+	let output = getOutputChannel();
+	output.appendLine("Starting server...");
+	_bokehDir = dir;
+	if(serverProcess){
+		serverProcess.kill();
+		return;
+	}
+
+	spawnServer();
+}
+
+function spawnServer() {
+	if(!_bokehDir){
+		return;
+	}
+	
+	let output = getOutputChannel();
+	let python = getPython();
+
+	let args = [
+		"-m",
+		"bokeh",
+		"serve",
+		_bokehDir,
+		"--dev"
+	];
+
+	_bokehDir = undefined;
+
+	serverProcess = cp.spawn(python, args);
+
+	serverProcess.stdout.on('data', (data) => {
+		output.append(`${data}`);
+	});
+	
+	serverProcess.stderr.on('data', (data) => {
+		output.append(`${data}`);
+	});
+	
+	serverProcess.on('close', (code) => {
+		output.append(`child process exited with code ${code}`);
+		spawnServer();
+	});
+}
+
+function getPython() : string {
+	let output = getOutputChannel();
+	let pythonConf = vscode.workspace.getConfiguration("python");
+	if(!pythonConf){
+		output.appendLine("Python not configured, assuming global python");
+		return "python";
+	}
+
+	let env = pythonConf.get<string>("pythonPath");
+	if(!env){
+		output.appendLine("No environment found, assuming global python");
+		return "python";
+	}
+
+	output.appendLine("Using " + env);
+	return env;
+}
+
 // this method is called when your extension is deactivated
-export function deactivate() {}
+export function deactivate() {
+	if(serverProcess){
+		serverProcess.kill();
+	}
+}
 
 let _channel: vscode.OutputChannel;
 function getOutputChannel(): vscode.OutputChannel {
