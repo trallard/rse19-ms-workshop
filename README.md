@@ -47,9 +47,10 @@ Pipelines can empower you to do more.
 You will need the requirements above as well as the following steps:
 
 1. Install Python > 3.6 (3.7 preferred)
-2. Clone this repo 
+2. Fork this repo 
+3. Clone your fork of the repo
 ```
-git clone https://github.com/trallard/rse19-ms-workshop.git
+git clone https://github.com/{your-user}/rse19-ms-workshop.git
 
 cd rse19-ms-workshop
 ```

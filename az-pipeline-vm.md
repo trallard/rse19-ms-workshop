@@ -71,6 +71,8 @@ First we specify what triggers the pipeline, in this case pushing to the master 
 
 For example, you might not want any pr to build so you can set this to `pr:none`
 
+Commit your changes and push to your repo.
+
 👉🏼 Read more about [triggers](https://docs.microsoft.com/azure/devops/pipelines/yaml-schema?view=azure-devops&tabs=schema&WT.mc_id=rse19-github-taallard#triggers)
 
 
@@ -82,3 +84,8 @@ Back in Azure Devops click on **Pipelines > New pipelines** and then select GitH
 
 
 DO NOT click on the "Use the clasic editor" .
+
+Select the `azure-pipelines.yml` file in your repo.
+
+Click on save and then run.
+You should see your first pipeline run and the logs being displayed.
