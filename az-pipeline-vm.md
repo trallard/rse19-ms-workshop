@@ -1,8 +1,21 @@
 # Introduction to Azure Pipelines
 
+- [Introduction to Azure Pipelines](#introduction-to-azure-pipelines)
+  - [What you'll actually do](#what-youll-actually-do)
+  - [Setting things up](#setting-things-up)
+  - [Understanding the Azure Pipeline Build](#understanding-the-azure-pipeline-build)
+    - [Hands on](#hands-on)
+  - [Setting your pipeline](#setting-your-pipeline)
+
 You can use Azure pipelines to test, build and deploy your Python (or any other language) projects without needing to set up any insfrastructure of your own.
 
-For this tutorial we will use the [Microsoft-hosted agents](https://docs.microsoft.com/azure/devops/pipelines/agents/hosted?view=azure-devops&WT.mc_id=rse19-github-taallard) with Python preinstalled - note that these can be Windows, Linux or macOS based.
+For this tutorial we will use the [Microsoft-hosted agents](https://docs.microsoft.com/azure/devops/pipelines/agents/hosted?view=azure-devops&WT.mc_id=rse19-github-taallard) with Python preinstalled - note that these can be Windows, Linux or MacOS based.
+
+## What you'll actually do
+
+1. Create a new Azure DevOps CI pipeline
+2. Create a basic CI pipeline that will run automated `pytests` for your bokeh apps
+3. Create a more complex pipelines that use Anaconda to test on Windows, Linux and MacOs
 
 ## Setting things up
 
@@ -24,7 +37,7 @@ Then click on **Create**
 A build can have multiple stages. Each stage can contain one or more jobs. For example you might have the following stages:
 - Test (my code using unittest)
 - Build (my awesome app)
-- Deploy (to pre-production)
+- Deploy 
 
 You can imagine a pipeline as a dependency graph:
 ![](assets/pipeline_hierarchy.png)
@@ -32,7 +45,11 @@ You can imagine a pipeline as a dependency graph:
 
 You can find a list of all the available tasks in the [Pipelines documentation](https://docs.microsoft.com/azure/devops/pipelines/tasks/?view=azure-devops&viewFallbackFrom=vsts&WT.mc_id=rse19-github-taallard). Plus you can define your own tasks using bash or PowerShell.
 
-Let's start by creating our `azure-pipelines.yml`. Make sure to place it on the root of your project directory.
+---
+
+### Hands on 
+
+✨👩🏿‍💻 Let's start by creating our `azure-pipelines.yml` in our repo. Make sure to place it on the root of your project directory.
 
 ```
 # Python example Azure Pipeline
@@ -54,6 +71,8 @@ First we specify what triggers the pipeline, in this case pushing to the master 
 
 For example, you might not want any pr to build so you can set this to `pr:none`
 
+Commit your changes and push to your repo.
+
 👉🏼 Read more about [triggers](https://docs.microsoft.com/azure/devops/pipelines/yaml-schema?view=azure-devops&tabs=schema&WT.mc_id=rse19-github-taallard#triggers)
 
 
@@ -62,3 +81,11 @@ For example, you might not want any pr to build so you can set this to `pr:none`
 Back in Azure Devops click on **Pipelines > New pipelines** and then select GitHub from the options presented:
 
 ![](https://ml-devops-tutorial.readthedocs.io/en/latest/_images/pipeline1.png)
+
+
+DO NOT click on the "Use the clasic editor" .
+
+Select the `azure-pipelines.yml` file in your repo.
+
+Click on save and then run.
+You should see your first pipeline run and the logs being displayed.
