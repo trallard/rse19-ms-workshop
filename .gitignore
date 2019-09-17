@@ -200,3 +200,5 @@ typings/
 
 # misc
 out
+
+.DS_Store
