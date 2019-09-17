@@ -4,6 +4,7 @@ import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as cp from 'child_process';
 
+let previewPanel: vscode.WebviewPanel | undefined;
 let serverProcess: cp.ChildProcess;
 let bokehDir: string;
 
@@ -24,24 +25,48 @@ export function activate(context: vscode.ExtensionContext) {
 		let output = getOutputChannel();
 		let activeEditor = vscode.window.activeTextEditor;
 		output.appendLine("Examining file...");
-		if(!activeEditor){
+		if (!activeEditor) {
 			output.appendLine("No active editor");
 			return;
 		}
 
 		let doc = activeEditor.document;
 		let start = doc.fileName.length - "main.py".length;
-		if(doc.fileName.substring(start) === "main.py"){
+		if (doc.fileName.substring(start) === "main.py") {
 			output.appendLine("main.py detected");
 			let text = doc.getText();
 			let import_bokeh = text.indexOf("from bokeh.io import curdoc") >= 0;
 			let add_root = text.indexOf("curdoc().add_root(") >= 0;
 			let dir = doc.fileName.substring(0, start);
-			if(import_bokeh && add_root){
+			if (import_bokeh && add_root) {
 				startServer(dir);
+
 			}
-		}else{
+		} else {
 			output.appendLine("Not a bokeh file");
+		}
+
+		const column = vscode.window.activeTextEditor ? vscode.window.activeTextEditor.viewColumn : undefined;
+		if (previewPanel) {
+			previewPanel.reveal(column);
+		}
+		else {
+			previewPanel = vscode.window.createWebviewPanel(
+				'bokehPreview',
+				'Bokeh Preview',
+				column || vscode.ViewColumn.One,
+				{
+					enableScripts: true
+				}
+			);
+
+			previewPanel.webview.html = getWebviewContent();
+
+			previewPanel.onDidDispose(() => {
+				previewPanel = undefined;
+			},
+				null,
+				context.subscriptions);
 		}
 	});
 
@@ -53,7 +78,7 @@ function startServer(dir: string) {
 	let output = getOutputChannel();
 	output.appendLine("Starting server...");
 	_bokehDir = dir;
-	if(serverProcess){
+	if (serverProcess) {
 		serverProcess.kill();
 		return;
 	}
@@ -62,10 +87,10 @@ function startServer(dir: string) {
 }
 
 function spawnServer() {
-	if(!_bokehDir){
+	if (!_bokehDir) {
 		return;
 	}
-	
+
 	let output = getOutputChannel();
 	let python = getPython();
 
@@ -84,27 +109,43 @@ function spawnServer() {
 	serverProcess.stdout.on('data', (data) => {
 		output.append(`${data}`);
 	});
-	
+
 	serverProcess.stderr.on('data', (data) => {
 		output.append(`${data}`);
 	});
-	
+
 	serverProcess.on('close', (code) => {
 		output.append(`child process exited with code ${code}`);
 		spawnServer();
 	});
 }
 
-function getPython() : string {
+function getWebviewContent() {
+	return `<!DOCTYPE html>
+  <html lang="en">
+  <head>
+	  <meta charset="UTF-8">
+	  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+	  <title>Bokeh Preview</title>
+  </head>
+  <body>
+  	<iframe src="http://localhost:5006/" style="position:fixed; top:0; left:0; bottom:0; right:0; width:100%; height:100%; border:none; margin:0; padding:0; overflow:hidden; z-index:999999;">
+		Your browser doesn't support iframes
+	</iframe>
+  </body>
+  </html>`;
+}
+
+function getPython(): string {
 	let output = getOutputChannel();
 	let pythonConf = vscode.workspace.getConfiguration("python");
-	if(!pythonConf){
+	if (!pythonConf) {
 		output.appendLine("Python not configured, assuming global python");
 		return "python";
 	}
 
 	let env = pythonConf.get<string>("pythonPath");
-	if(!env){
+	if (!env) {
 		output.appendLine("No environment found, assuming global python");
 		return "python";
 	}
@@ -115,7 +156,7 @@ function getPython() : string {
 
 // this method is called when your extension is deactivated
 export function deactivate() {
-	if(serverProcess){
+	if (serverProcess) {
 		serverProcess.kill();
 	}
 }

@@ -17,9 +17,23 @@
 		"commands": [
 			{
 				"command": "extension.bokehPreview",
-				"title": "Bokeh Preview"
+				"title": "Preview",
+				"category": "Bokeh",
+				"icon": {
+					"light": "media/preview_light.svg",
+					"dark": "media/preview_dark.svg"
+				}
 			}
-		]
+		],
+		"menus": {
+			"editor/title": [
+				{
+				"when": "resourceFilename == main.py",
+				"command": "extension.bokehPreview",
+				"group": "navigation"
+				}
+			]
+		}
 	},
 	"scripts": {
 		"vscode:prepublish": "npm run compile",
