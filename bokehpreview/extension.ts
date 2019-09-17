@@ -22,6 +22,7 @@ export function activate(context: vscode.ExtensionContext) {
 	let disposable = vscode.commands.registerCommand('extension.bokehPreview', () => {
 		// The code you place here will be executed every time your command is executed
 
+		// first we see if there is an active editor
 		let output = getOutputChannel();
 		let activeEditor = vscode.window.activeTextEditor;
 		output.appendLine("Examining file...");
@@ -30,15 +31,20 @@ export function activate(context: vscode.ExtensionContext) {
 			return;
 		}
 
+		// now we get the active document and see if it is named "main.py"
 		let doc = activeEditor.document;
 		let start = doc.fileName.length - "main.py".length;
 		if (doc.fileName.substring(start) === "main.py") {
+			// finally we look for certain lines which are highly correlated
+			// with Bokeh usage
 			output.appendLine("main.py detected");
 			let text = doc.getText();
 			let import_bokeh = text.indexOf("from bokeh.io import curdoc") >= 0;
 			let add_root = text.indexOf("curdoc().add_root(") >= 0;
 			let dir = doc.fileName.substring(0, start);
 			if (import_bokeh && add_root) {
+				// fairly certain this is a Bokeh server file so we try to
+				// start the server
 				startServer(dir);
 
 			}
@@ -47,10 +53,13 @@ export function activate(context: vscode.ExtensionContext) {
 		}
 
 		const column = vscode.window.activeTextEditor ? vscode.window.activeTextEditor.viewColumn : undefined;
+
+		// we either create or reveal the preview panel
 		if (previewPanel) {
 			previewPanel.reveal(column);
 		}
 		else {
+			// the preview panel lives as a tab in the editor
 			previewPanel = vscode.window.createWebviewPanel(
 				'bokehPreview',
 				'Bokeh Preview',
@@ -60,8 +69,10 @@ export function activate(context: vscode.ExtensionContext) {
 				}
 			);
 
+			// we can set its HTML directly
 			previewPanel.webview.html = getWebviewContent();
 
+			// when the user closes it, we clear our local reference
 			previewPanel.onDidDispose(() => {
 				previewPanel = undefined;
 			},
@@ -73,6 +84,8 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(disposable);
 }
 
+// this method sets the Bokeh directory and tries to start a new server.
+// if the existing server is running, it kills it.
 let _bokehDir: string | undefined;
 function startServer(dir: string) {
 	let output = getOutputChannel();
@@ -86,14 +99,15 @@ function startServer(dir: string) {
 	spawnServer();
 }
 
+// this method spawns a new Bokeh server child process
 function spawnServer() {
 	if (!_bokehDir) {
+		// no directory has been set, so new need for a server
 		return;
 	}
 
 	let output = getOutputChannel();
 	let python = getPython();
-
 	let args = [
 		"-m",
 		"bokeh",
@@ -102,10 +116,14 @@ function spawnServer() {
 		"--dev"
 	];
 
+	// this partially protects us from starting two servers at the same time
 	_bokehDir = undefined;
 
+	// this creates a new independent child process that runs the server
 	serverProcess = cp.spawn(python, args);
 
+	// we can use this to hook up to stdout/stderr of the process
+	// and output them to our custom channel
 	serverProcess.stdout.on('data', (data) => {
 		output.append(`${data}`);
 	});
@@ -116,10 +134,14 @@ function spawnServer() {
 
 	serverProcess.on('close', (code) => {
 		output.append(`child process exited with code ${code}`);
-		spawnServer();
+		// if we killed an old server, then we want to start a new one
+		if (_bokehDir) {
+			spawnServer();
+		}
 	});
 }
 
+// We use a simple iframe to host the page produced by the Bokeh server.
 function getWebviewContent() {
 	return `<!DOCTYPE html>
   <html lang="en">
@@ -136,6 +158,7 @@ function getWebviewContent() {
   </html>`;
 }
 
+// In this function, we attempt to find the configured python environment, if it exists.
 function getPython(): string {
 	let output = getOutputChannel();
 	let pythonConf = vscode.workspace.getConfiguration("python");
@@ -161,6 +184,7 @@ export function deactivate() {
 	}
 }
 
+// this method creates our own private output channel
 let _channel: vscode.OutputChannel;
 function getOutputChannel(): vscode.OutputChannel {
 	if (!_channel) {
