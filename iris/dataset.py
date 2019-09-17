@@ -3,22 +3,22 @@
 from sklearn.datasets import load_iris
 from bokeh.models import ColumnDataSource
 
+
 class IrisDataset:
     """ Encapsulates interactive Bokeh datasources for the Iris dataset """
 
     def __init__(self):
-        #pylint: disable=no-member
+        # pylint: disable=no-member
         batch = load_iris()
         self._feature_names = batch.feature_names
         self._target_names = batch.target_names
         self._features = {
-            name: batch.data[batch.target == i] for i, name in enumerate(batch.target_names)
+            name: batch.data[batch.target == i]
+            for i, name in enumerate(batch.target_names)
         }
         self._x_feature = self._feature_names[0]
         self._y_feature = self._feature_names[1]
-        self._sources = {
-            name: ColumnDataSource() for name in self._target_names
-        }
+        self._sources = {name: ColumnDataSource() for name in self._target_names}
         self._update()
 
     def _update(self):

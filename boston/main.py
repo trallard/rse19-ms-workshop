@@ -21,30 +21,31 @@ class Plot:
         self._dataset = dataset
 
         hover_tool = HoverTool()
-        hover_tool.tooltips = [
-            ("price", "@price")
-        ]
-        self._fig = figure(title=dataset.title,
-                           tools=[hover_tool],
-                           name="plot")
+        hover_tool.tooltips = [("price", "@price")]
+        self._fig = figure(title=dataset.title, tools=[hover_tool], name="plot")
 
         color_mapper = LinearColorMapper(palette=palette)
-        self._fig.circle('x', 'y', source=dataset.source,
-                         fill_color={'field': 'price', 'transform': color_mapper})
+        self._fig.circle(
+            "x",
+            "y",
+            source=dataset.source,
+            fill_color={"field": "price", "transform": color_mapper},
+        )
 
-        self._x_select = Select(title="X Axis:",
-                                value=dataset.x_feature,
-                                options=dataset.feature_names)
-        self._y_select = Select(title="Y Axis:",
-                                value=dataset.y_feature,
-                                options=dataset.feature_names)
+        self._x_select = Select(
+            title="X Axis:", value=dataset.x_feature, options=dataset.feature_names
+        )
+        self._y_select = Select(
+            title="Y Axis:", value=dataset.y_feature, options=dataset.feature_names
+        )
 
         self._x_select.on_change("value", self.update_data)
         self._y_select.on_change("value", self.update_data)
-        self._inputs = column(self._x_select, self._y_select,
-                              sizing_mode="stretch_width", name="inputs")
+        self._inputs = column(
+            self._x_select, self._y_select, sizing_mode="stretch_width", name="inputs"
+        )
 
-    def update_data(self, attrname, old, new): #pylint: disable=unused-argument
+    def update_data(self, attrname, old, new):  # pylint: disable=unused-argument
         """ Callback when a selector is updated """
         self._dataset.x_feature = self._x_select.value
         self._dataset.y_feature = self._y_select.value
