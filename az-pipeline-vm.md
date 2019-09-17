@@ -62,3 +62,6 @@ For example, you might not want any pr to build so you can set this to `pr:none`
 Back in Azure Devops click on **Pipelines > New pipelines** and then select GitHub from the options presented:
 
 ![](https://ml-devops-tutorial.readthedocs.io/en/latest/_images/pipeline1.png)
+
+
+DO NOT click on the "Use the clasic editor" .
