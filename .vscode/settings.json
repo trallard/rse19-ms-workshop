@@ -1,0 +1,16 @@
+{
+    "python.pythonPath": "c:\\Source\\rse19-ms-workshop\\.env\\Scripts\\python.exe",
+    "workbench.colorCustomizations": {
+        "activityBar.background": "#a293b7",
+        "activityBar.foreground": "#15202b",
+        "activityBar.inactiveForeground": "#15202b99",
+        "titleBar.activeBackground": "#8874a3",
+        "titleBar.inactiveBackground": "#8874a399",
+        "titleBar.activeForeground": "#e7e7e7",
+        "titleBar.inactiveForeground": "#e7e7e799",
+        "statusBar.background": "#8874a3",
+        "statusBarItem.hoverBackground": "#a293b7",
+        "statusBar.foreground": "#e7e7e7"
+    },
+    "peacock.color": "#8874a3"
+}
