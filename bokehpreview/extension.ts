@@ -1,14 +1,13 @@
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
-import * as fs from 'fs';
 import * as cp from 'child_process';
 
 let previewPanel: vscode.WebviewPanel | undefined;
 let serverProcess: cp.ChildProcess;
-let bokehDir: string;
+let bokehDir: string | undefined;
 
-// this method is called when your extension is activated
+// this function is called when your extension is activated
 // your extension is activated the very first time the command is executed
 export function activate(context: vscode.ExtensionContext) {
 
@@ -22,34 +21,9 @@ export function activate(context: vscode.ExtensionContext) {
 	let disposable = vscode.commands.registerCommand('extension.bokehPreview', () => {
 		// The code you place here will be executed every time your command is executed
 
-		// first we see if there is an active editor
-		let output = getOutputChannel();
-		let activeEditor = vscode.window.activeTextEditor;
-		output.appendLine("Examining file...");
-		if (!activeEditor) {
-			output.appendLine("No active editor");
-			return;
-		}
-
-		// now we get the active document and see if it is named "main.py"
-		let doc = activeEditor.document;
-		let start = doc.fileName.length - "main.py".length;
-		if (doc.fileName.substring(start) === "main.py") {
-			// finally we look for certain lines which are highly correlated
-			// with Bokeh usage
-			output.appendLine("main.py detected");
-			let text = doc.getText();
-			let import_bokeh = text.indexOf("from bokeh.io import curdoc") >= 0;
-			let add_root = text.indexOf("curdoc().add_root(") >= 0;
-			let dir = doc.fileName.substring(0, start);
-			if (import_bokeh && add_root) {
-				// fairly certain this is a Bokeh server file so we try to
-				// start the server
-				startServer(dir);
-
-			}
-		} else {
-			output.appendLine("Not a bokeh file");
+		let dir = getBokehDir();
+		if (dir) {
+			startServer(dir);
 		}
 
 		const column = vscode.window.activeTextEditor ? vscode.window.activeTextEditor.viewColumn : undefined;
@@ -84,13 +58,46 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(disposable);
 }
 
-// this method sets the Bokeh directory and tries to start a new server.
+function getBokehDir(): string | undefined {
+	let output = getOutputChannel();
+	let activeEditor = vscode.window.activeTextEditor;
+	output.appendLine("Examining file...");
+	if (!activeEditor) {
+		output.appendLine("No active editor");
+		return undefined;
+	}
+
+	// now we get the active document and see if it is named "main.py"
+	let doc = activeEditor.document;
+	let start = doc.fileName.length - "main.py".length;
+	if (doc.fileName.substring(start) === "main.py") {
+		// finally we look for certain lines which are highly correlated
+		// with Bokeh usage
+		output.appendLine("main.py detected");
+		let text = doc.getText();
+		let import_bokeh = text.indexOf("from bokeh.io import curdoc") >= 0;
+		let add_root = text.indexOf("curdoc().add_root(") >= 0;
+		let dir = doc.fileName.substring(0, start);
+		if (import_bokeh && add_root) {
+			// fairly certain this is a Bokeh server file so we try to
+			// start the server
+			return dir;
+		} else {
+			output.appendLine("Unable to find bokeh invocations in file");
+			return undefined;
+		}
+	}
+
+	output.appendLine("Not a bokeh file");
+	return undefined;
+}
+
+// this function sets the Bokeh directory and tries to start a new server.
 // if the existing server is running, it kills it.
-let _bokehDir: string | undefined;
 function startServer(dir: string) {
 	let output = getOutputChannel();
 	output.appendLine("Starting server...");
-	_bokehDir = dir;
+	bokehDir = dir;
 	if (serverProcess) {
 		serverProcess.kill();
 		return;
@@ -99,9 +106,9 @@ function startServer(dir: string) {
 	spawnServer();
 }
 
-// this method spawns a new Bokeh server child process
+// this function spawns a new Bokeh server child process
 function spawnServer() {
-	if (!_bokehDir) {
+	if (!bokehDir) {
 		// no directory has been set, so new need for a server
 		return;
 	}
@@ -112,12 +119,12 @@ function spawnServer() {
 		"-m",
 		"bokeh",
 		"serve",
-		_bokehDir,
+		bokehDir,
 		"--dev"
 	];
 
 	// this partially protects us from starting two servers at the same time
-	_bokehDir = undefined;
+	bokehDir = undefined;
 
 	// this creates a new independent child process that runs the server
 	serverProcess = cp.spawn(python, args);
@@ -135,7 +142,7 @@ function spawnServer() {
 	serverProcess.on('close', (code) => {
 		output.append(`child process exited with code ${code}`);
 		// if we killed an old server, then we want to start a new one
-		if (_bokehDir) {
+		if (bokehDir) {
 			spawnServer();
 		}
 	});
@@ -177,14 +184,14 @@ function getPython(): string {
 	return env;
 }
 
-// this method is called when your extension is deactivated
+// this function is called when your extension is deactivated
 export function deactivate() {
 	if (serverProcess) {
 		serverProcess.kill();
 	}
 }
 
-// this method creates our own private output channel
+// this function creates our own private output channel
 let _channel: vscode.OutputChannel;
 function getOutputChannel(): vscode.OutputChannel {
 	if (!_channel) {

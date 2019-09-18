@@ -147,7 +147,7 @@ the automatically generated extension code we just ran:
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
 
-// this method is called when your extension is activated
+// this function is called when your extension is activated
 // your extension is activated the very first time the command is executed
 export function activate(context: vscode.ExtensionContext) {
 
@@ -168,12 +168,12 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(disposable);
 }
 
-// this method is called when your extension is deactivated
+// this function is called when your extension is deactivated
 export function deactivate() {}
 ```
 
 The code in `activate` is called when the activation event we've specified
-first fires. In this method, we register our new command by giving it a name 
+first fires. In this function, we register our new command by giving it a name 
 (`extension.helloWorld`, matching the name we gave in `project.json`) and
 providing a lambda function which will be called whenever the command is
 triggered. In this case, we've popped up a quick information box saying
@@ -189,43 +189,7 @@ the rich [VS Code Extension API](https://code.visualstudio.com/api/references/vs
 
 ## Using Custom Output
 
-While showing things as a popup message is one way of communicating, 
-it is not a particularly effective way to provide helpful,
-longer-term communication between our extension and the user.
-One particularly useful functionality to which our Extension has access
-is the ability to create custom output windows, which act like
-read-only consoles that present information sequentially, allowing the
-user to scroll back, click links, and copy and paste information.
-
-We begin by adding the following code to `src/extension.ts`:
-
-```typescript
-// this method creates our own private output channel
-let _channel: vscode.OutputChannel;
-function getOutputChannel(): vscode.OutputChannel {
-	if (!_channel) {
-		_channel = vscode.window.createOutputChannel('Bokeh');
-	}
-	return _channel;
-}
-```
-
-This code either returns our existing channel, or creates a new one
-that will be shown in the Output drop down with the label "Bokeh".
-Next, we can write to this output by appending lines. Try adding
-the following code to your command callback:
-
-```
-```
-
-Now, let's debug and run it:
-
-![]()
-
-
-## Child Processes
-
-In the rest of this tutorial, we will focus on a particular extension
+In the rest of this tutorial, we will focus on recreating a particular extension
 that we have developed for this repo. There are two [Bokeh](https://bokeh.pydata.org/en/latest/)
 interactive websites that provide tools for exploring the [Iris](https://en.wikipedia.org/wiki/Iris_flower_data_set)
 and [Boston](https://www.cs.toronto.edu/~delve/data/boston/bostonDetail.html)
@@ -237,13 +201,23 @@ python -m bokeh serve iris
 
 It would be very interesting if we could get a live preview of the
 website as we develop it from inside of VS Code, similar to the Markdown
-preview functionality (which is itself a default extension!). First, we
-need a way of spawning a child process that will run the Bokeh
-server for us. Thankfully, we have full access to Node's
-[Child Process](https://nodejs.org/api/child_process.html) API. First
-things first, we are going to rebrand our extension:
+preview functionality (which is itself a default extension!). To start, 
+let's find a better way of communicating with the user.
+
+While showing text as a popup message is a fine way of communicating, 
+it is not particularly effective for providing helpful,
+longer-term communication between our extension and the user.
+One particularly useful functionality to which our Extension has access
+is the ability to create custom output windows, which act like
+read-only consoles that present information sequentially, allowing the
+user to scroll back, click links, and copy and paste information.
+
+First things first, we are going to rebrand our extension:
 
 ```javascript
+  "name": "bokehpreview",
+  "displayName": "BokehPreview",
+  //...
   "activationEvents": ["onCommand:extension.bokehPreview"],
   "main": "./out/extension.js",
   "contributes": {
@@ -263,17 +237,365 @@ as `Bokeh: Preview`:
 
 ![Bokeh Preview](assets/bokeh_preview.png)
 
-Now we want our extension to spawn a child process that runs Bokeh.
-To do this, we need to do a few things:
+Now let's add the following code to `src/extension.ts`:
+
+```typescript
+// this function creates our own private output channel
+let _channel: vscode.OutputChannel;
+function getOutputChannel(): vscode.OutputChannel {
+	if (!_channel) {
+		_channel = vscode.window.createOutputChannel('Bokeh');
+	}
+	return _channel;
+}
+```
+
+This code either returns an existing channel, or creates a new one
+that will be shown in the Output drop down with the label "Bokeh".
+Next, we can write to this output by appending lines. Try adding
+the following code to your command callback:
+
+```typescript
+let output = getOutputChannel();
+output.appendLine("Hello VS Code!");
+
+output.appendLine("The primes to 100:");
+let primes : number[] = [];
+for(let i=2; i<100; ++i){
+    let isPrime = true;
+    for(let j=0; j<primes.length; ++j){
+        if(i%primes[j] === 0){
+            isPrime = false;
+            break;
+        }
+    }
+
+    if(isPrime){
+        primes.push(i);
+        output.appendLine(i.toString());
+    }
+}
+```
+
+Now, let's debug and run it:
+
+![Animation of Output Channel](assets/output_channel.gif)
+
+Now that we have our own communication channel, let's look at how to 
+run the Bokeh server.
+
+## Child Processes
+
+Ultimately, we need a way of programmatically spawning a child process
+that will run the Bokeh server for us. Thankfully, we have full access to
+Node's
+[Child Process](https://nodejs.org/api/child_process.html) API. 
+
+To spawn a child process that runs Bokeh, we need to do a few things:
 
 1. Find out what version of Python the user is running
 2. Figure out if the current file is actually a Bokeh site
-3. Check if an existing server process is already running
-4. Spawn a new server
+3. Spawn a server process
 
+Let's look at how we can use the rich suite of workspace introspection
+tools that VS Code gives us to achieve that.
 
+### Interacting with Other Extensions
+
+In order to find out what version of Python (or Python virtual
+environment) the user has configured for a project, we need to
+access the place that information is stored, namely, the configuration
+of the Python language extension. Thankfully, VS Code exposes this information
+to our extension via the configuration namespace:
+
+```typescript
+let pythonConf = vscode.workspace.getConfiguration("python");
+if (!pythonConf) {
+  output.appendLine("Python not configured, assuming global python");
+  return "python";
+}
+```
+
+We can actually ask the workspace for the configuration for the python
+extension directly. If we cannot find one, we'll default to assuming that
+`python` is a valid command for the system (i.e. on the PATH). However,
+if there is a configuration, we can ask it how the user has configured
+the Python extension:
+
+```typescript
+let env = pythonConf.get<string>("pythonPath");
+if (!env) {
+  output.appendLine("No environment found, assuming global python");
+  return "python";
+}
+```
+
+Again, if there is not an environment, we default back to simply `python`.
+This kind of interaction is key to enabling interoperability between
+extensions. Let's put it together into a single function:
+
+```typescript
+function getPython(): string {
+	let output = getOutputChannel();
+	let pythonConf = vscode.workspace.getConfiguration("python");
+	if (!pythonConf) {
+		output.appendLine("Python not configured, assuming global python");
+		return "python";
+	}
+
+	let env = pythonConf.get<string>("pythonPath");
+	if (!env) {
+		output.appendLine("No environment found, assuming global python");
+		return "python";
+	}
+
+	output.appendLine("Using " + env);
+	return env;
+}
+```
+
+### Learning About the Current File
+
+VS Code provides us full access to the state of the current editor, including
+the current file the user is looking at. What we want to do now is see whether
+it is likely to be a Bokeh server definition. First, we get a reference to the
+current active editor and its document:
+
+```typescript
+let activeEditor = vscode.window.activeTextEditor;
+output.appendLine("Examining file...");
+if (!activeEditor) {
+  output.appendLine("No active editor");
+  return;
+}
+
+// now we get the active document and see if it is named "main.py"
+let doc = activeEditor.document;
+let start = doc.fileName.length - "main.py".length;
+if (doc.fileName.substring(start) === "main.py") {
+  // finally we look for certain lines which are highly correlated
+  // with Bokeh usage
+  output.appendLine("main.py detected");
+```
+
+We first get the active editor, and then query its open document. We then
+check that the name of that document ends in `main.py`, indicating this
+could be a Bokeh server file. We can access many different properties of
+the document in this way. Next, we find out some information about
+the contents of the file:
+
+```typescript
+		// finally we look for certain lines which are highly correlated
+		// with Bokeh usage
+		output.appendLine("main.py detected");
+		let text = doc.getText();
+		let import_bokeh = text.indexOf("from bokeh.io import curdoc") >= 0;
+		let add_root = text.indexOf("curdoc().add_root(") >= 0;
+		let dir = doc.fileName.substring(0, start);
+```
+
+Chances are that any file named `main.py` with the text
+`from bokeh.io import curdoc` and `curdoc().add_root(` is a Bokeh server,
+so we can fairly confidently return the directory. The full function is
+below:
+
+```typescript
+function getBokehDir(): string | undefined {
+	let output = getOutputChannel();
+	let activeEditor = vscode.window.activeTextEditor;
+	output.appendLine("Examining file...");
+	if (!activeEditor) {
+		output.appendLine("No active editor");
+		return undefined;
+	}
+
+	// now we get the active document and see if it is named "main.py"
+	let doc = activeEditor.document;
+	let start = doc.fileName.length - "main.py".length;
+	if (doc.fileName.substring(start) === "main.py") {
+		// finally we look for certain lines which are highly correlated
+		// with Bokeh usage
+		output.appendLine("main.py detected");
+		let text = doc.getText();
+		let import_bokeh = text.indexOf("from bokeh.io import curdoc") >= 0;
+		let add_root = text.indexOf("curdoc().add_root(") >= 0;
+		let dir = doc.fileName.substring(0, start);
+		if (import_bokeh && add_root) {
+			// fairly certain this is a Bokeh server file so we try to
+			// start the server
+			return dir;
+		} else {
+			output.appendLine("Unable to find bokeh invocations in file");
+			return undefined;
+		}
+	}
+
+	output.appendLine("Not a bokeh file");
+	return undefined;
+}
+```
+
+### Spawn a new server
+
+Now that we have the directory to serve the Bokeh file and the current Python
+executable path, we can start up our server process.
+
+```typescript
+import * as cp from 'child_process';
+let serverProcess: cp.ChildProcess;
+
+// ...
+
+let args = [
+  "-m",
+  "bokeh",
+  "serve",
+  bokehDir,
+  "--dev"
+];
+
+// this partially protects us from starting two servers at the same time
+bokehDir = undefined;
+
+// this creates a new independent child process that runs the server
+serverProcess = cp.spawn(python, args);
+
+// we can use this to hook up to stdout/stderr of the process
+// and output them to our custom channel
+serverProcess.stdout.on('data', (data) => {
+  output.append(`${data}`);
+});
+
+serverProcess.stderr.on('data', (data) => {
+  output.append(`${data}`);
+});
+```
+
+One great aspect of the child process module is that we can attach to
+the pipes of the process. In our case, we can redirect them to our
+output channel, allowing the user to see the output from the process
+directly inside of VS Code. However, we need to be careful. If the
+user runs the command twice, this will create a second server, which
+will likely fail due to a port conflict. We need to kill the existing
+server, and then (once it has died) start up a new server. To do this,
+we need some additional work. We can see the full system below:
+
+```typescript
+let bokehDir: string | undefined;
+// ...
+
+// this function sets the Bokeh directory and tries to start a new server.
+// if the existing server is running, it kills it.
+function startServer(dir: string) {
+	let output = getOutputChannel();
+	output.appendLine("Starting server...");
+	bokehDir = dir;
+	if (serverProcess) {
+		serverProcess.kill();
+		return;
+	}
+
+	spawnServer();
+}
+
+// this function spawns a new Bokeh server child process
+function spawnServer() {
+	if (!bokehDir) {
+		// no directory has been set, so new need for a server
+		return;
+	}
+
+	let output = getOutputChannel();
+	let python = getPython();
+	let args = [
+		"-m",
+		"bokeh",
+		"serve",
+		bokehDir,
+		"--dev"
+	];
+
+	// this partially protects us from starting two servers at the same time
+	bokehDir = undefined;
+
+	serverProcess = cp.spawn(python, args);
+	serverProcess.stdout.on('data', (data) => {
+		output.append(`${data}`);
+	});
+	serverProcess.stderr.on('data', (data) => {
+		output.append(`${data}`);
+	});
+
+	serverProcess.on('close', (code) => {
+		output.append(`child process exited with code ${code}`);
+		// if we killed an old server, then we want to start a new one
+		if (bokehDir) {
+			spawnServer();
+		}
+	});
+}
+
+// this function is called when your extension is deactivated
+export function deactivate() {
+	if(serverProcess){
+		serverProcess.kill();
+	}
+}
+```
+
+Let's see how this works together:
+
+![Child Process Animation](assets/child_process.gif)
 
 
 ## Custom Menus
+
+Another cool thing we can do with VS Code extensions is change the GUI of
+the workbench, adding menus, buttons and icons. For this extension, it
+makes sense to add a menu button to the title bar. First, we need
+some icons:
+
+![preview light](media/preview_light.svg)
+![preview dark](media/preview_dark.svg)
+
+The two versions of this SVG will allow us to support light and dark themes.
+We can then update the `package.json` to set icons for our command:
+
+```javascript
+		"commands": [
+			{
+				"command": "extension.bokehPreview",
+				"title": "Preview",
+				"category": "Bokeh",
+				"icon": {
+					"light": "media/preview_light.svg",
+					"dark": "media/preview_dark.svg"
+				}
+			}
+		],
+```
+
+Finally, we let VS Code know that this extension also contributes a menu
+item:
+
+```javascript
+"menus": {
+  "editor/title": [
+    {
+    "when": "resourceFilename == main.py",
+    "command": "extension.bokehPreview",
+    "group": "navigation"
+    }
+  ]
+}
+```
+
+There are some interesting aspects here. First, we limit the when the icon
+will be displayed using a [when clause construct](https://code.visualstudio.com/docs/getstarted/keybindings#_when-clause-contexts). These are very powerful, allowing
+functionality to be turned on based upon various editor contexts, such as
+a file being detected as a particular language or the system being in debug
+mode. The result is a fun icon which, when clicked, will call our extension:
+
+![Preview Button Snip](assets/preview_button.png)
 
 ## WebView
