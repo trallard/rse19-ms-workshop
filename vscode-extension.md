@@ -555,8 +555,11 @@ the workbench, adding menus, buttons and icons. For this extension, it
 makes sense to add a menu button to the title bar. First, we need
 some icons:
 
-![preview light](media/preview_light.svg)
-![preview dark](media/preview_dark.svg)
+|        Name       |                   Icon                    |
+|-------------------|-------------------------------------------|
+| Preview Light     | ![preview light](media/preview_light.svg) |
+| Preview Dark Icon | ![preview dark](media/preview_dark.svg)   |
+
 
 The two versions of this SVG will allow us to support light and dark themes.
 We can then update the `package.json` to set icons for our command:
