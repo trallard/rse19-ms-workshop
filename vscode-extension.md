@@ -599,7 +599,7 @@ functionality to be turned on based upon various editor contexts, such as
 a file being detected as a particular language or the system being in debug
 mode. The result is a fun icon which, when clicked, will call our extension:
 
-![Preview Button Snip](assets/preview_button.png)
+![Preview Button Snip](assets/preview_menu_button.png)
 
 ## WebView
 
