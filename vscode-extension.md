@@ -19,6 +19,12 @@ if you are interested you should take a look at the resources available
 at the [main VS Code documentation](https://code.visualstudio.com/api).
 Much of this material is to be found in deeper detail there.
 
+#### NOTE
+In this tutorial, we will be building up an extension piece by piece. If you
+have trouble following what is happening, you can view the final version of
+the code files at [bokehpreview/extension.ts](bokehpreview/extension.ts)
+and [package.json](package.json).
+
 ## Getting Started
 
 Starting a new Extension project is straightforward. You will need to have
@@ -28,7 +34,9 @@ installed [Node.js](https://nodejs.org/en/) so you can run this command:
 npm install -g yo generator-code
 ```
 
-This will install [Yeoman](http://yeoman.io/) and [VS Code Extension Generator](https://www.npmjs.com/package/generator-code). You can use these to quickly set up a new Extension
+This will install [Yeoman](http://yeoman.io/) and
+[VS Code Extension Generator](https://www.npmjs.com/package/generator-code).
+You can use these to quickly set up a new Extension
 project using an interactive command line tool:
 
 ```bash
@@ -73,7 +81,7 @@ at how we do that.
 
 Extensions in VS Code are implemented in [Typescript](https://www.typescriptlang.org/),
 a typed language which transpiles to Javascript. First, however,
-we define in `project.json` what kind of extension we are building
+we define in `package.json` what kind of extension we are building
 and what it contributes to VS Code:
 
 ```javascript
@@ -174,7 +182,7 @@ export function deactivate() {}
 
 The code in `activate` is called when the activation event we've specified
 first fires. In this function, we register our new command by giving it a name 
-(`extension.helloWorld`, matching the name we gave in `project.json`) and
+(`extension.helloWorld`, matching the name we gave in `package.json`) and
 providing a lambda function which will be called whenever the command is
 triggered. In this case, we've popped up a quick information box saying
 `Hello World!`. Let's change this to be `Hello VS Code!` and then reload
@@ -237,34 +245,47 @@ as `Bokeh: Preview`:
 
 ![Bokeh Preview](assets/bokeh_preview.png)
 
-Now let's add the following code to `src/extension.ts`:
+Since we have changed the name of our extension command, we also need to
+update our call to `registerCommand`:
+
+```typescript
+// ...
+let disposable = vscode.commands.registerCommand('extension.bokehPreview', () => {
+// ...
+```
+
+Next we create our own custom output channel by adding the following code
+to `src/extension.ts`:
 
 ```typescript
 // this function creates our own private output channel
-let _channel: vscode.OutputChannel;
+let outputChannel: vscode.OutputChannel;
+//...
+
 function getOutputChannel(): vscode.OutputChannel {
-	if (!_channel) {
-		_channel = vscode.window.createOutputChannel('Bokeh');
+	if (!outputChannel) {
+		outputChannel = vscode.window.createOutputChannel('Bokeh');
 	}
-	return _channel;
+	return outputChannel;
 }
 ```
 
 This code either returns an existing channel, or creates a new one
 that will be shown in the Output drop down with the label "Bokeh".
 Next, we can write to this output by appending lines. Try adding
-the following code to your command callback:
+the following code right after the `registerCommand` line inside
+your command callback:
 
 ```typescript
 let output = getOutputChannel();
 output.appendLine("Hello VS Code!");
 
 output.appendLine("The primes to 100:");
-let primes : number[] = [];
-for(let i=2; i<100; ++i){
+let primes = [2];
+for(let i=3; i<100; i += 2){
     let isPrime = true;
-    for(let j=0; j<primes.length; ++j){
-        if(i%primes[j] === 0){
+    for(let prime of primes){
+        if(i % prime === 0){
             isPrime = false;
             break;
         }
@@ -277,9 +298,13 @@ for(let i=2; i<100; ++i){
 }
 ```
 
-Now, let's debug and run it:
+Let's debug and run it:
 
 ![Animation of Output Channel](assets/output_channel.gif)
+
+If you don't see the `Output` pane, you may need to click `View -> Output`:
+
+![View->Output](assets/view_output.png)
 
 Now that we have our own communication channel, let's look at how to 
 run the Bokeh server.
@@ -289,16 +314,90 @@ run the Bokeh server.
 Ultimately, we need a way of programmatically spawning a child process
 that will run the Bokeh server for us. Thankfully, we have full access to
 Node's
-[Child Process](https://nodejs.org/api/child_process.html) API. 
+[Child Process](https://nodejs.org/api/child_process.html) API. Below
+we can see the code we need to do this (don't worry, we're going to
+explain this step by step):
 
-To spawn a child process that runs Bokeh, we need to do a few things:
+```typescript
+let bokehDir: string | undefined;
+// ...
+
+// we can add this code to our command callback now
+let dir = getBokehDir();
+if (dir) {
+	startServer(dir);
+} else {
+	return;
+}
+
+// this function sets the Bokeh directory and tries to start a new server.
+// if the existing server is running, it kills it.
+function startServer(dir: string) {
+	let output = getOutputChannel();
+	output.appendLine("Starting server...");
+	bokehDir = dir;
+	if (serverProcess) {
+		serverProcess.kill();
+		return;
+	}
+
+	spawnServer();
+}
+
+// this function spawns a new Bokeh server child process
+function spawnServer() {
+	if (!bokehDir) {
+		// no directory has been set, so new need for a server
+		return;
+	}
+
+	let output = getOutputChannel();
+	let python = getPython();
+	let args = [
+		"-m",
+		"bokeh",
+		"serve",
+		bokehDir,
+		"--dev"
+	];
+
+	// this partially protects us from starting two servers at the same time
+	bokehDir = undefined;
+
+	serverProcess = cp.spawn(python, args);
+	serverProcess.stdout.on('data', (data) => {
+		output.append(`${data}`);
+	});
+	serverProcess.stderr.on('data', (data) => {
+		output.append(`${data}`);
+	});
+
+	serverProcess.on('close', (code) => {
+		output.appendLine(`Bokeh server has been shut down`);
+		// if we killed an old server, then we want to start a new one
+		if (bokehDir) {
+			spawnServer();
+		}
+	});
+}
+
+// this function is called when your extension is deactivated
+export function deactivate() {
+	if(serverProcess){
+		serverProcess.kill();
+	}
+}
+```
+
+There is a LOT of stuff going on there, so we're going to break it down
+into the three main steps we have to take to spawn the child process:
 
 1. Find out what version of Python the user is running
 2. Figure out if the current file is actually a Bokeh site
 3. Spawn a server process
 
-Let's look at how we can use the rich suite of workspace introspection
-tools that VS Code gives us to achieve that.
+We will explain how we can achieve each of these tasks using the rich
+suite of workspace introspection tools that VS Code gives us.
 
 ### Interacting with Other Extensions
 
@@ -316,9 +415,9 @@ if (!pythonConf) {
 }
 ```
 
-We can actually ask the workspace for the configuration for the python
+We can actually ask the workspace for the configuration of the python
 extension directly. If we cannot find one, we'll default to assuming that
-`python` is a valid command for the system (i.e. on the PATH). However,
+`python` is a valid command for the system (*i.e.* on the PATH). However,
 if there is a configuration, we can ask it how the user has configured
 the Python extension:
 
@@ -366,7 +465,7 @@ let activeEditor = vscode.window.activeTextEditor;
 output.appendLine("Examining file...");
 if (!activeEditor) {
   output.appendLine("No active editor");
-  return;
+  return undefined;
 }
 
 // now we get the active document and see if it is named "main.py"
@@ -385,7 +484,7 @@ the document in this way. Next, we find out some information about
 the contents of the file:
 
 ```typescript
-		// finally we look for certain lines which are highly correlated
+		// finally we look for certain snippets which are highly correlated
 		// with Bokeh usage
 		output.appendLine("main.py detected");
 		let text = doc.getText();
@@ -395,8 +494,8 @@ the contents of the file:
 ```
 
 Chances are that any file named `main.py` with the text
-`from bokeh.io import curdoc` and `curdoc().add_root(` is a Bokeh server,
-so we can fairly confidently return the directory. The full function is
+`from bokeh.io import curdoc` and `curdoc().add_root(` is a Bokeh site,
+so we can fairly confidently return its directory. The full function is
 below:
 
 ```typescript
@@ -471,26 +570,26 @@ serverProcess.stderr.on('data', (data) => {
 });
 ```
 
-One great aspect of the child process module is that we can attach to
-the pipes of the process. In our case, we can redirect them to our
-output channel, allowing the user to see the output from the process
-directly inside of VS Code. However, we need to be careful. If the
+One great aspect of the `child_process` module is that we can attach to
+the pipes of the process, as you see above. In our case, we can redirect
+them to our output channel, allowing the user to see the output from the
+process directly inside of VS Code. However, we need to be careful. If the
 user runs the command twice, this will create a second server, which
 will likely fail due to a port conflict. We need to kill the existing
 server, and then (once it has died) start up a new server. To do this,
-we need some additional work. We can see the full system below:
+we need to kill the server process first, and then spawn a new server
+when the old process is fully closed:
 
 ```typescript
-let bokehDir: string | undefined;
-// ...
 
-// this function sets the Bokeh directory and tries to start a new server.
-// if the existing server is running, it kills it.
+// ...
 function startServer(dir: string) {
-	let output = getOutputChannel();
-	output.appendLine("Starting server...");
+	if(bokehDir){
+		return;
+	}
+
 	bokehDir = dir;
-	if (serverProcess) {
+	if(serverProcess){
 		serverProcess.kill();
 		return;
 	}
@@ -498,52 +597,19 @@ function startServer(dir: string) {
 	spawnServer();
 }
 
-// this function spawns a new Bokeh server child process
-function spawnServer() {
-	if (!bokehDir) {
-		// no directory has been set, so new need for a server
-		return;
+// ...
+
+serverProcess.on('close', (code) => {
+	output.appendLine(`Bokeh server has been shut down`);
+	// if we killed an old server, then we want to start a new one
+	if (bokehDir) {
+		spawnServer();
 	}
+});
 
-	let output = getOutputChannel();
-	let python = getPython();
-	let args = [
-		"-m",
-		"bokeh",
-		"serve",
-		bokehDir,
-		"--dev"
-	];
-
-	// this partially protects us from starting two servers at the same time
-	bokehDir = undefined;
-
-	serverProcess = cp.spawn(python, args);
-	serverProcess.stdout.on('data', (data) => {
-		output.append(`${data}`);
-	});
-	serverProcess.stderr.on('data', (data) => {
-		output.append(`${data}`);
-	});
-
-	serverProcess.on('close', (code) => {
-		output.append(`child process exited with code ${code}`);
-		// if we killed an old server, then we want to start a new one
-		if (bokehDir) {
-			spawnServer();
-		}
-	});
-}
-
-// this function is called when your extension is deactivated
-export function deactivate() {
-	if(serverProcess){
-		serverProcess.kill();
-	}
-}
 ```
 
-Let's see how this works together:
+And that is everything! We can finally see how this all works together:
 
 ![Child Process Animation](assets/child_process.gif)
 
@@ -558,7 +624,7 @@ some icons:
 |        Name       |                   Icon                    |
 |-------------------|-------------------------------------------|
 | Preview Light     | ![preview light](media/preview_light.svg) |
-| Preview Dark Icon | ![preview dark](media/preview_dark.svg)   |
+| Preview Dark      | ![preview dark](media/preview_dark.svg)   |
 
 
 The two versions of this SVG will allow us to support light and dark themes.
@@ -593,18 +659,19 @@ item:
 }
 ```
 
-There are some interesting aspects here. First, we limit the when the icon
+There are some interesting aspects here. First, we limit when the icon
 will be displayed using a [when clause construct](https://code.visualstudio.com/docs/getstarted/keybindings#_when-clause-contexts). These are very powerful, allowing
-functionality to be turned on based upon various editor contexts, such as
-a file being detected as a particular language or the system being in debug
-mode. The result is a fun icon which, when clicked, will call our extension:
+functionality to be turned on or off based upon various editor contexts, such
+as only activating when a file is written in a particular language or
+when the workbench is in debug mode. The result is a fun icon which,
+when clicked, will execute our command:
 
 ![Preview Button Snip](assets/preview_menu_button.png)
 
 ## WebView
 
 Perhaps the most powerful element to add to an extension (barring language
-extensions or full debuggers) is a custom Webview UI element. This is a
+capabilities or full debuggers) is a custom Webview UI element. This is a
 full HTML/JS/CSS webpage that runs inside of VS Code. Typically, this
 should be avoided unless absolutely necessary, and given the wide array
 of things VS Code exposes to via the VS Code API it is rarely needed, but
@@ -643,8 +710,8 @@ previewPanel = vscode.window.createWebviewPanel(
 previewPanel.webview.html = getWebviewContent();
 ```
 
-`getWebviewContent` creates a simple webpage as a string which
-uses an `iframe` to host the website:
+`getWebviewContent` returns a simple webpage which uses an `iframe`
+to host the website:
 
 ```typescript
 function getWebviewContent() {
@@ -698,3 +765,11 @@ previewPanel.onDidDispose(() => {
 And that is it! Let's see the whole extension in operation:
 
 ![Webview Animation](assets/webview.gif)
+
+## Packaging and Deploying
+
+We do not cover packaging your extension and deploying it in this
+tutorial, but there is great documentation on how to do that
+[here](https://code.visualstudio.com/api/working-with-extensions/publishing-extension).
+Good luck, and happy hacking! We look forward to seeing your
+extensions in the VS Code marketplace.
