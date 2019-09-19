@@ -51,7 +51,7 @@ You can find a list of all the available tasks in the [Pipelines documentation](
 
 ✨👩🏿‍💻 Let's start by creating our `azure-pipelines.yml` in our repo. Make sure to place it on the root of your project directory.
 
-```
+```yaml
 # Python example Azure Pipeline
 
 trigger:
@@ -71,10 +71,25 @@ First we specify what triggers the pipeline, in this case pushing to the master 
 
 For example, you might not want any pr to build so you can set this to `pr:none`
 
-Commit your changes and push to your repo.
 
 👉🏼 Read more about [triggers](https://docs.microsoft.com/azure/devops/pipelines/yaml-schema?view=azure-devops&tabs=schema&WT.mc_id=rse19-github-taallard#triggers)
 
+
+The next step us defining the pool we want to use. Basically this is the OS for your project:
+
+```yaml
+pool:
+    vmImage: 'Ubuntu-16.04'
+```
+And add steps to your pipeline:
+```yaml
+
+steps:
+- script: echo "Hello World!"
+  displayName: "Run AZ pipelines Hello World"
+
+```
+Commit your changes and push to your repo.
 
 ## Setting your pipeline
 
@@ -89,3 +104,85 @@ Select the `azure-pipelines.yml` file in your repo.
 
 Click on save and then run.
 You should see your first pipeline run and the logs being displayed.
+
+
+🎉 ## Python specific pipelines
+
+Replace your steps:
+
+
+```yaml
+trigger:
+  - azure-pipelines
+  - master
+
+jobs:
+  - job:
+    displayName: Python tests
+    pool:
+      vmImage: "ubuntu-16.04"
+
+    steps:
+    - task: UsePythonVersion@0
+      displayName: 'Use Python 3.6'
+      inputs:
+        versionSpec: '3.6'
+        architecture: 'x64'
+```
+The steps: element can contain children like 
+`- task:`, which runs a specific task that's defined in Azure DevOps (see the full [Task reference](https://docs.microsoft.com/azure/devops/pipelines/tasks/index?view=azure-devops&WT.mc_id=rse19-github-taallard)), and `- script:`, which runs an arbitrary set of commands as you see in a moment. The task in the code above is `UsePythonVersion`, which specifies the version of Python to use on the build agent. The `@<n>` suffix indicates the version of the task; `@0` indicates "preview".
+
+Adding additional steps as if they were bash commands:
+
+```yaml
+- script: python -m pip install --upgrade pip
+          displayName: "Upgrade pip"
+
+- script: |
+    # commands run within the step
+    pip install -r requirements.txt
+  displayName: 'Install dependencies'
+
+- script: |
+    python -m pip install pylint --quiet
+    pylint boston/*.py
+    pylint iris/*.py
+  displayName: 'Run lint tests'
+
+- script: |
+    pip install pytest pytest-azurepipelines
+    python -m pytest tests/
+  displayName: 'Test with pytest'
+```
+
+Save, commit and see your pipeline run!
+
+🐍## Multiple Python versions
+
+You can modify your steps to use a matrix specification:
+(see [reference here](https://docs.microsoft.com/azure/devops/pipelines/yaml-schema?view=azure-devops&tabs=example&WT.mc_id=rse19-github-taallard#strategies))
+
+```yaml
+jobs:
+    - job: Ubuntu_unit_test
+      # https://docs.microsoft.com/en-us/azure/devops/pipelines/yaml-schema?view=azure-devops&tabs=schema#pool
+      pool:
+        vmImage: 'Ubuntu-16.04'
+      strategy:
+        matrix:
+          Python36:
+            python.version: '3.6'
+          Python37:
+            python.version: '3.7'
+
+      steps:
+        - task: UsePythonVersion@0
+          displayName: 'Get Python version $(python.version)' 
+          inputs:
+            versionSpec: '$(python.version)'
+            architecture: 'x64'
+```
+Commit > see run!
+
+Can you figure out how to run on Windows????
+

@@ -6,6 +6,7 @@ import * as cp from 'child_process';
 let previewPanel: vscode.WebviewPanel | undefined;
 let serverProcess: cp.ChildProcess;
 let bokehDir: string | undefined;
+let outputChannel: vscode.OutputChannel;
 
 // this function is called when your extension is activated
 // your extension is activated the very first time the command is executed
@@ -21,9 +22,33 @@ export function activate(context: vscode.ExtensionContext) {
 	let disposable = vscode.commands.registerCommand('extension.bokehPreview', () => {
 		// The code you place here will be executed every time your command is executed
 
+		/*
+		let output = getOutputChannel();
+		output.appendLine("Hello VS Code!");
+		output.appendLine("The primes to 100:");
+
+		let primes = [2];
+		for (let i = 3; i < 100; i += 2) {
+			let isPrime = true;
+			for (let prime of primes) {
+				if (i % prime === 0) {
+					isPrime = false;
+					break;
+				}
+			}
+
+			if (isPrime) {
+				primes.push(i);
+				output.appendLine(i.toString());
+			}
+		}
+		*/
+
 		let dir = getBokehDir();
 		if (dir) {
 			startServer(dir);
+		} else {
+			return;
 		}
 
 		let column = undefined;
@@ -204,10 +229,9 @@ export function deactivate() {
 }
 
 // this function creates our own private output channel
-let _channel: vscode.OutputChannel;
 function getOutputChannel(): vscode.OutputChannel {
-	if (!_channel) {
-		_channel = vscode.window.createOutputChannel('Bokeh');
+	if (!outputChannel) {
+		outputChannel = vscode.window.createOutputChannel('Bokeh');
 	}
-	return _channel;
+	return outputChannel;
 }
