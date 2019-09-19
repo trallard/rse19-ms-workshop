@@ -1,25 +1,32 @@
+# Azure pipeline for Python project
+#  for python docs https://docs.microsoft.com/en-us/azure/devops/pipelines/ecosystems/python?view=azure-devops
+
+# https://docs.microsoft.com/en-us/azure/devops/pipelines/yaml-schema?view=azure-devops&tabs=schema#triggers
 trigger:
   - azure-pipelines
   - master 
 
-jobs:
-  - job: Ubuntu_unit_test
+stages:
+- stage: simple_python_testing
+  displayName: 'Python matrix testing'
+  jobs:
+    - job: Ubuntu_unit_test
       # https://docs.microsoft.com/en-us/azure/devops/pipelines/yaml-schema?view=azure-devops&tabs=schema#pool
-    pool:
+      pool:
         vmImage: 'Ubuntu-16.04'
-    strategy:
-      matrix:
-        Python36:
-          python.version: '3.6'
-        Python37:
-          python.version: '3.7'
+      strategy:
+        matrix:
+          Python36:
+            python.version: '3.6'
+          Python37:
+            python.version: '3.7'
 
-    steps:
-      - task: UsePythonVersion@0
-        displayName: 'Get Python version $(python.version)' 
-        inputs:
-          versionSpec: '$(python.version)'
-          architecture: 'x64'
+      steps:
+        - task: UsePythonVersion@0
+          displayName: 'Get Python version $(python.version)' 
+          inputs:
+            versionSpec: '$(python.version)'
+            architecture: 'x64'
           
         - script: python -m pip install --upgrade pip
           displayName: "Upgrade pip"
@@ -39,24 +46,26 @@ jobs:
             pip install pytest pytest-azurepipelines
             python -m pytest tests/
           displayName: 'Test with pytest'
-
-  - job: Windows_unit_test
-      # https://docs.microsoft.com/en-us/azure/devops/pipelines/yaml-schema?view=azure-devops&tabs=schema#pool
-    pool:
+                
+    
+    # let's test in Windows
+    - job: Windows_unit_test
+      pool:
         vmImage: 'windows-2019'
-    strategy:
-      matrix:
-        Python36:
-          python.version: '3.6'
-        Python37:
-          python.version: '3.7'
 
-    steps:
-      - task: UsePythonVersion@0
-        displayName: 'Get Python version $(python.version)' 
-        inputs:
-          versionSpec: '$(python.version)'
-          architecture: 'x64'
+      strategy:
+        matrix:
+          Python36:
+            python.version: '3.6'
+          Python37:
+            python.version: '3.7'
+
+      steps:
+        - task: UsePythonVersion@0
+          displayName: 'Get Python version $(python.version)' 
+          inputs:
+            versionSpec: '$(python.version)'
+            architecture: 'x64'
           
         - script: python -m pip install --upgrade pip
           displayName: "Upgrade pip"
@@ -67,12 +76,6 @@ jobs:
           displayName: 'Install dependencies'
 
         - script: |
-            python -m pip install pylint --quiet
-            pylint boston/*.py
-            pylint iris/*.py
-          displayName: 'Run lint tests'
-
-        - script: |
             pip install pytest pytest-azurepipelines
-            python -m pytest tests/
+            python -m pytest tests/ 
           displayName: 'Test with pytest'
