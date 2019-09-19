@@ -26,7 +26,10 @@ export function activate(context: vscode.ExtensionContext) {
 			startServer(dir);
 		}
 
-		const column = vscode.window.activeTextEditor ? vscode.window.activeTextEditor.viewColumn : undefined;
+		let column = undefined;
+		if (vscode.window.activeTextEditor) {
+			column = vscode.window.activeTextEditor.viewColumn;
+		}
 
 		// we either create or reveal the preview panel
 		if (previewPanel) {
@@ -156,9 +159,18 @@ function getWebviewContent() {
 	  <meta charset="UTF-8">
 	  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 	  <title>Bokeh Preview</title>
+	  <style>
+	  iframe {
+		position:fixed;
+		top:0; left:0; bottom:0; right:0;
+		width:100%; height:100%;
+		border:none; margin:0; padding:0;
+		overflow:hidden; z-index:999999;
+	  }
+	  </style>
   </head>
   <body>
-  	<iframe src="http://localhost:5006/" style="position:fixed; top:0; left:0; bottom:0; right:0; width:100%; height:100%; border:none; margin:0; padding:0; overflow:hidden; z-index:999999;">
+  	<iframe src="http://localhost:5006/">
 		Your browser doesn't support iframes
 	</iframe>
   </body>

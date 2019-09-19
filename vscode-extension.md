@@ -599,3 +599,99 @@ mode. The result is a fun icon which, when clicked, will call our extension:
 ![Preview Button Snip](assets/preview_button.png)
 
 ## WebView
+
+Perhaps the most powerful element to add to an extension (barring language
+extensions or full debuggers) is a custom Webview UI element. This is a
+full HTML/JS/CSS webpage that runs inside of VS Code. Typically, this
+should be avoided unless absolutely necessary, and given the wide array
+of things VS Code exposes to via the VS Code API it is rarely needed, but
+sometimes only a custom WebView will do.
+
+Luckily for us, this is one of those times! We want to show a preview
+window inside of the editor that displays the page that is being hosted
+by our Bokeh server. When we create the command, we can also create
+the preview panel and add it to the VS Code workbench. First, we need
+to find out what column of the workbench to use:
+
+```typescript
+let column = undefined;
+if (vscode.window.activeTextEditor) {
+  column = vscode.window.activeTextEditor.viewColumn;
+}
+```
+
+Now, let's create the preview window:
+
+```typescript
+let previewPanel: vscode.WebviewPanel | undefined;
+// ...
+
+// the preview panel lives as a tab in the editor
+previewPanel = vscode.window.createWebviewPanel(
+  'bokehPreview',
+  'Bokeh Preview',
+  column || vscode.ViewColumn.One,
+  {
+    enableScripts: true
+  }
+);
+
+// we can set its HTML directly
+previewPanel.webview.html = getWebviewContent();
+```
+
+`getWebviewContent` creates a simple webpage as a string which
+uses an `iframe` to host the website:
+
+```typescript
+function getWebviewContent() {
+	return `<!DOCTYPE html>
+  <html lang="en">
+  <head>
+	  <meta charset="UTF-8">
+	  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+	  <title>Bokeh Preview</title>
+	  <style>
+	  iframe {
+		position:fixed;
+		top:0; left:0; bottom:0; right:0;
+		width:100%; height:100%;
+		border:none; margin:0; padding:0;
+		overflow:hidden; z-index:999999;
+	  }
+	  </style>
+  </head>
+  <body>
+  	<iframe src="http://localhost:5006/">
+		Your browser doesn't support iframes
+	</iframe>
+  </body>
+  </html>`;
+}
+```
+
+However, what happens when the user runs our command a second time? We
+probably don't want to create a second preview window. Instead, let's
+check if we've already created one and just bring it back to the foreground:
+
+```typescript
+if (previewPanel) {
+  previewPanel.reveal(column);
+}
+```
+
+One last thing: what if the user closes the window? Our reference would
+then point at a dead UI element. VS Code enables us to deal with this
+eventuality using an event callback:
+
+```typescript
+previewPanel.onDidDispose(() => {
+  previewPanel = undefined;
+},
+  null,
+  context.subscriptions);
+```
+
+And that is it! Let's see the whole extension in operation:
+
+![Webview Animation](assets/webview.gif)
