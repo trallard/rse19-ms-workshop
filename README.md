@@ -1,7 +1,12 @@
 # Be an RSE Superhero with VS Code and Azure Pipelines
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-purple.svg)](https://opensource.org/licenses/MIT)
-[![Build Status](https://dev.azure.com/trallard/rse19-demo/_apis/build/status/trallard.rse19-demo?branchName=azure-pipelines)](https://dev.azure.com/trallard/rse19-demo/_build/latest?definitionId=7&branchName=azure-pipelines)
+[![Build Status](https://dev.azure.com/trallard/rse19-demo/_apis/build/status/trallard.rse19-ms-workshop?branchName=master)](https://dev.azure.com/trallard/rse19-demo/_build/latest?definitionId=6&branchName=master)
+
+- [Be an RSE Superhero with VS Code and Azure Pipelines](#be-an-rse-superhero-with-vs-code-and-azure-pipelines)
+  - [Requirements](#requirements)
+  - [Set up](#set-up)
+  - [If running locally - i.e. not at the RSE conference](#if-running-locally---ie-not-at-the-rse-conference)
 
 In this workshop, we will show you how you can incorporate VS Code and Azure
 Pipelines into your day-to-day workflow as an RSE, helping you to be more
@@ -20,34 +25,64 @@ for your projects, from  multi environment testing to automated building and
 deployment of your solutions. Come along and learn how VS Code and Azure
 Pipelines can empower you to do more.
 
-## Getting Started
-
-
-### Windows
-```
-python -m venv .env
-.env\Scripts\activate
-
-pip install -r requirements.txt
-bokeh serve iris
-```
-
-### Mac/Linux
-```
-python -m venv .env
-source .env/bin/activate
-
-pip install -r requirements.txt
-bokeh serve iris
-```
 
 ## Requirements
 
+💻 Laptop with WiFi access
+
+✨ GitHub Account
+
+🚇 _[Azure DevOps account](https://azure.microsoft.com/services/devops/?WT.mc_id=rse19-github-taallard)_
+
+- An [OpenSSH SSH client](https://code.visualstudio.com/docs/remote/troubleshooting?WT.mc_id=rse19-github-taallard#_installing-a-supported-ssh-client) compatible with the remote extension
+
+## Set up 
+
 - Install [VSCode](https://code.visualstudio.com//?wt.mc_id=rse19-github-taallard)
-- Once installed click on the following link to install the[VSCode Remote development extension pack](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.vscode-remote-extensionpack&WT.mc_id=rse19-github-taallard) and click on Install, this will launch VSCode and start the installation. You might be asked for further confirmation.
-- Next install the Azure CLI, follow [this link](https://docs.microsoft.com/cli/azure/install-azure-cli?view=azure-cli-latest&WT.mc_id=rse19-github-taallard) for the detailed installation instructions.
-- Finally, install [Azure CLI tools](https://marketplace.visualstudio.com/items?itemName=ms-vscode.azurecli&WT.mc_id=rse19-github-taallard)
+- Install the 🐍 [Python VSCode extension](https://marketplace.visualstudio.com/items?itemName=ms-python.python&WT.mc_id=rse19-github-taallard`)
+- Install the [VSCode Remote development extension pack](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.vscode-remote-extensionpack&WT.mc_id=rse19-github-taallard) 
+- Make sure you have the details to access the VM for the workshop (ask your instructor if not)
 
+## If running locally - i.e. not at the RSE conference
+You will need the requirements above as well as the following steps:
 
-✨Note that you will need to clone this repository to follow along with the excercises. 
+1. Install Python > 3.6 (3.7 preferred)
+2. Fork this repo 
+3. Clone your fork of the repo
+```
+git clone https://github.com/{your-user}/rse19-ms-workshop.git
 
+cd rse19-ms-workshop
+```
+3. Install dependencies - we recommend using virtual environments or conda environments
+
+_Virtual env_
+```
+# MAC or Linux 
+python3 -m venv .env
+source .env/bin/activate
+pip install -r requirements.txt
+```
+
+```
+# Windows
+py -m venv .env
+.\env\Scripts\activate
+pip install -r requirements.txt
+```
+
+_Anaconda_
+```
+conda env create -n rse19
+conda activate rse19
+conda install --file requirements.txt
+```
+
+To run the bokeh apps you can run the following command:
+
+```
+bokeh serve iris
+
+#or
+bokeh serve boston
+```
