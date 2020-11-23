@@ -32,15 +32,15 @@ Pipelines can empower you to do more.
 
 ✨ GitHub Account
 
-🚇 _[Azure DevOps account](https://azure.microsoft.com/services/devops/?WT.mc_id=rse19-github-taallard)_
+🚇 _[Azure DevOps account](https://azure.microsoft.com/services/devops/?WT.mc_id=academic-0000-taallard)_
 
-- An [OpenSSH SSH client](https://code.visualstudio.com/docs/remote/troubleshooting?WT.mc_id=rse19-github-taallard#_installing-a-supported-ssh-client) compatible with the remote extension
+- An [OpenSSH SSH client](https://code.visualstudio.com/docs/remote/troubleshooting?WT.mc_id=academic-0000-taallard#_installing-a-supported-ssh-client) compatible with the remote extension
 
 ## Set up 
 
-- Install [VSCode](https://code.visualstudio.com//?wt.mc_id=rse19-github-taallard)
-- Install the 🐍 [Python VSCode extension](https://marketplace.visualstudio.com/items?itemName=ms-python.python&WT.mc_id=rse19-github-taallard`)
-- Install the [VSCode Remote development extension pack](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.vscode-remote-extensionpack&WT.mc_id=rse19-github-taallard) 
+- Install [VSCode](https://code.visualstudio.com//?WT.mc_id=academic-0000-taallard)
+- Install the 🐍 [Python VSCode extension](https://marketplace.visualstudio.com/items?itemName=ms-python.python&WT.mc_id=academic-0000-taallard`)
+- Install the [VSCode Remote development extension pack](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.vscode-remote-extensionpack&WT.mc_id=academic-0000-taallard) 
 - Make sure you have the details to access the VM for the workshop (ask your instructor if not)
 
 ## If running locally - i.e. not at the RSE conference
